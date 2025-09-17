@@ -1,0 +1,18 @@
+# Ignore object files
+*.o
+
+# Ignore compiled executables
+*.out
+*.exe
+demo
+
+# Ignore backup files
+*~
+
+# Ignore build directories
+/build/
+/bin/
+/obj/
+
+# Ignore macOS system files
+.DS_Store

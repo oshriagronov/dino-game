@@ -5,7 +5,7 @@
 *.out
 *.exe
 demo
-
+dino
 # Ignore backup files
 *~
 
@@ -16,3 +16,4 @@ demo
 
 # Ignore macOS system files
 .DS_Store
+.vscode

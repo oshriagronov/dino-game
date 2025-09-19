@@ -2,7 +2,9 @@
 Game::Game():
     window{nullptr, SDL_DestroyWindow},
     renderer{nullptr, SDL_DestroyRenderer}, 
-    background{nullptr, SDL_DestroyTexture}
+    track_ptr{nullptr, SDL_DestroyTexture},
+    dino_ptr{nullptr, SDL_DestroyTexture},
+    cactus_ptr{nullptr, SDL_DestroyTexture}
 {}
 
 
@@ -29,10 +31,22 @@ void Game::init()
 }
 
 void Game::loading_media(){
-    this->background.reset(IMG_LoadTexture(
+    this->track_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        "assets/other/track.png"));
-    if(this->background == nullptr){
+        track.get_path().c_str()));
+    if(this->track_ptr == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+    this->dino_ptr.reset(IMG_LoadTexture(
+        this->renderer.get(), 
+        dino.get_path().c_str()));
+    if(this->dino_ptr == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+    this->cactus_ptr.reset(IMG_LoadTexture(
+        this->renderer.get(), 
+        cactus.get_path().c_str()));
+    if(this->dino_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
 }
@@ -40,10 +54,18 @@ void Game::loading_media(){
 // game loop
 void Game::run(){
     // continuos loop   
+    // track rectangle, will be moved to it's own class later
+    SDL_Rect trackSrcRect = {0, 0, track.get_width(), track.get_height()};
+    SDL_Rect trackDestRect = {0, track.get_y(), track.get_width(), track.get_height()};
+    // dino rectangle, will be moved to it's own class later
+    SDL_Rect dinoSrcRect = {0, 0, dino.get_width(), dino.get_height()};
+    // the number 500-60 is for the dino to be exactly on the track
+    SDL_Rect dinoDestRect = {20, 500 - 60, dino.get_width(), dino.get_height()};
+    // cactus rectangle
+    SDL_Rect cactusSrcRect = {0, 0, cactus.get_width(), cactus.get_height()};
+    SDL_Rect cactusDestRect = {cactus.get_x(), cactus.get_y(), cactus.get_width(), cactus.get_height()};
+    // game loop
     while(true){
-        // track rectangle, will be moved to it's own class later
-        SDL_Rect srcRect = {0, 0, 800, 28};
-        SDL_Rect destRect = {0, 500, 800, 28};
         /*
         * poll of events, take care of the events one by one until they all done which the function
         * will return 0 when there no events to take care of, and 1 when there still events to take care of.
@@ -65,7 +87,9 @@ void Game::run(){
         // rendering.
 
         SDL_RenderClear(this->renderer.get());
-        SDL_RenderCopy(this->renderer.get(), this->background.get(), &srcRect, &destRect);
+        SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), &trackSrcRect, &trackDestRect);
+        SDL_RenderCopy(this->renderer.get(), this->dino_ptr.get(), &dinoSrcRect, &dinoDestRect);
+        SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), &cactusSrcRect, &cactusDestRect);
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);

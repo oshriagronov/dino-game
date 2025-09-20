@@ -38,6 +38,10 @@ private:
     float gravity = 0.5f;     // strength of gravity
     float jumpStrength = -20; // initial upward velocity (negative = up)
     bool isJumping = false;
+
+    //cactus section
+    const int spawn_point = Width + 100;
+
 public:
     Game();
     void init();
@@ -47,6 +51,8 @@ public:
     void renderDino(SDL_Renderer* renderer);
     void updateDinoRunAnimation();
     void updateDinoAnimation();
+    void updateCactus();
+    void renderCactus();
 };
 
 #endif // GAME_H

@@ -8,7 +8,7 @@ Game::Game():
     cactus_ptr{nullptr, SDL_DestroyTexture},
     trackDestRect1{-floorOffsetX, track.get_default_y(), track.get_width(), track.get_height()},
     dinoDestRect{dino.get_x(), dino.get_y(), dino.get_width(), dino.get_height()},
-    cactusDestRect{cactus.get_x(), cactus.get_y(), cactus.get_width(), cactus.get_height()},
+    cactusDestRect{spawn_point, cactus.get_y(), cactus.get_width(), cactus.get_height()},
     trackDestRect2{-floorOffsetX + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
 {}
 
@@ -99,7 +99,14 @@ void Game::renderDino(SDL_Renderer* renderer){
         SDL_RenderCopy(renderer, this->dino_ptr_run2.get(), nullptr, &this->dinoDestRect);
 }
 
+void Game::updateCactus(){
+    if(cactusDestRect.x > -cactus.get_width())
+        cactusDestRect.x -= TRACK_SPEED;
+    else
+        cactusDestRect.x = spawn_point;
+}
 
+void Game::renderCactus(){}
 // game loop
 void Game::run(){
     // continuos loop   
@@ -137,14 +144,14 @@ void Game::run(){
         // world moving
         this->trackUpdate();
         this->updateDinoAnimation();
+        this->updateCactus();
         // rendering.
         SDL_RenderClear(this->renderer.get());
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect1);
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect2);
         // function the render the dino movement base on the frame
         this->renderDino(this->renderer.get());
-        //SDL_RenderCopy(this->renderer.get(), this->dino_ptr.get(), nullptr, &this->dinoDestRect);
-        //SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), nullptr, &this->cactusDestRect);
+        SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), nullptr, &this->cactusDestRect);
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);

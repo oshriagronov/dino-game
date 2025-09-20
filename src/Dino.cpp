@@ -29,7 +29,3 @@ int Dino::get_x(){
 int Dino::get_y(){
     return y;
 }
-
-void Dino::set_y(int y){
-    this->y = y;
-}

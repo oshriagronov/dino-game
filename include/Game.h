@@ -12,7 +12,7 @@ class Game
 private:
     static constexpr int Height = 600;
     static constexpr int Width = 800;
-    static constexpr int speed = 5;
+    static constexpr int TRACK_SPEED = 5;
     const std::string title = "Dino Game";
     SDL_Event event;
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window;
@@ -33,13 +33,19 @@ private:
     bool useLeftFrame = true;
     Uint32 lastFrameTime = 0;       // time of last frame switch
     Uint32 frameInterval = 150;     // how often to switch (ms)
+    // Jumping physics
+    float velocityY = 0.0f;
+    float gravity = 0.5f;     // strength of gravity
+    float jumpStrength = -20; // initial upward velocity (negative = up)
+    bool isJumping = false;
 public:
     Game();
     void init();
     void loading_media();
     void run();
-    void track_movement();
+    void trackUpdate();
     void renderDino(SDL_Renderer* renderer);
+    void updateDinoRunAnimation();
     void updateDinoAnimation();
 };
 

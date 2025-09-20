@@ -61,21 +61,37 @@ void Game::loading_media(){
         throw std::runtime_error(SDL_GetError());
     }
 }
-void Game::track_movement(){
-    floorOffsetX += speed;
+void Game::trackUpdate(){
+    floorOffsetX += TRACK_SPEED;
     if (floorOffsetX >= track.get_width()) {
         floorOffsetX = track.get_default_x();
     }
     this->trackDestRect1.x = -floorOffsetX + 5;
     this->trackDestRect2.x = -floorOffsetX + track.get_width();
 }
-void Game::updateDinoAnimation(){
+void Game::updateDinoRunAnimation(){
     Uint32 now = SDL_GetTicks();
     if (now - lastFrameTime > frameInterval) {
         useLeftFrame = !useLeftFrame;   // toggle frame
         lastFrameTime = now;
     }
 }
+
+void Game::updateDinoAnimation(){
+    if(isJumping){
+        dinoDestRect.y += (int)velocityY;
+        velocityY += gravity;
+        if(dinoDestRect.y >= dino.get_y()){
+            dinoDestRect.y = dino.get_y();
+            isJumping = false;
+        }   
+    }
+    // if not jumping then running.
+    else
+        this->updateDinoRunAnimation();
+    velocityY += gravity;
+}
+
 void Game::renderDino(SDL_Renderer* renderer){
     if(useLeftFrame)
         SDL_RenderCopy(renderer, this->dino_ptr_run1.get(), nullptr, &this->dinoDestRect);
@@ -101,12 +117,25 @@ void Game::run(){
             case SDL_QUIT:
                 return;
                 break;
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.sym)
+                {
+                case SDLK_SPACE:
+                    if(!isJumping){
+                        isJumping = true;
+                        velocityY = jumpStrength;
+                    }
+                    break;
+                default:
+                    break;
+                }
+                break;
             default:
                 break;
             }
         }
         // world moving
-        this->track_movement();
+        this->trackUpdate();
         this->updateDinoAnimation();
         // rendering.
         SDL_RenderClear(this->renderer.get());

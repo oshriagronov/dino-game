@@ -3,8 +3,13 @@ Game::Game():
     window{nullptr, SDL_DestroyWindow},
     renderer{nullptr, SDL_DestroyRenderer}, 
     track_ptr{nullptr, SDL_DestroyTexture},
-    dino_ptr{nullptr, SDL_DestroyTexture},
-    cactus_ptr{nullptr, SDL_DestroyTexture}
+    dino_ptr_run1{nullptr, SDL_DestroyTexture},
+    dino_ptr_run2{nullptr, SDL_DestroyTexture},
+    cactus_ptr{nullptr, SDL_DestroyTexture},
+    trackDestRect1{-floorOffsetX, track.get_default_y(), track.get_width(), track.get_height()},
+    dinoDestRect{dino.get_x(), dino.get_y(), dino.get_width(), dino.get_height()},
+    cactusDestRect{cactus.get_x(), cactus.get_y(), cactus.get_width(), cactus.get_height()},
+    trackDestRect2{-floorOffsetX + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
 {}
 
 
@@ -37,34 +42,51 @@ void Game::loading_media(){
     if(this->track_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
-    this->dino_ptr.reset(IMG_LoadTexture(
+    this->dino_ptr_run1.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        dino.get_path().c_str()));
-    if(this->dino_ptr == nullptr){
+        dino.get_path_run1().c_str()));
+    if(this->dino_ptr_run1 == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+    this->dino_ptr_run2.reset(IMG_LoadTexture(
+        this->renderer.get(), 
+        dino.get_path_run2().c_str()));
+    if(this->dino_ptr_run2 == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->cactus_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
         cactus.get_path().c_str()));
-    if(this->dino_ptr == nullptr){
+    if(this->cactus_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
 }
+void Game::track_movement(){
+    floorOffsetX += speed;
+    if (floorOffsetX >= track.get_width()) {
+        floorOffsetX = track.get_default_x();
+    }
+    this->trackDestRect1.x = -floorOffsetX + 5;
+    this->trackDestRect2.x = -floorOffsetX + track.get_width();
+}
+void Game::updateDinoAnimation(){
+    Uint32 now = SDL_GetTicks();
+    if (now - lastFrameTime > frameInterval) {
+        useLeftFrame = !useLeftFrame;   // toggle frame
+        lastFrameTime = now;
+    }
+}
+void Game::renderDino(SDL_Renderer* renderer){
+    if(useLeftFrame)
+        SDL_RenderCopy(renderer, this->dino_ptr_run1.get(), nullptr, &this->dinoDestRect);
+    else
+        SDL_RenderCopy(renderer, this->dino_ptr_run2.get(), nullptr, &this->dinoDestRect);
+}
+
 
 // game loop
 void Game::run(){
     // continuos loop   
-    // track rectangle, will be moved to it's own class later
-    SDL_Rect trackSrcRect = {0, 0, track.get_width(), track.get_height()};
-    SDL_Rect trackDestRect = {0, track.get_y(), track.get_width(), track.get_height()};
-    // dino rectangle, will be moved to it's own class later
-    SDL_Rect dinoSrcRect = {0, 0, dino.get_width(), dino.get_height()};
-    // the number 500-60 is for the dino to be exactly on the track
-    SDL_Rect dinoDestRect = {20, 500 - 60, dino.get_width(), dino.get_height()};
-    // cactus rectangle
-    SDL_Rect cactusSrcRect = {0, 0, cactus.get_width(), cactus.get_height()};
-    SDL_Rect cactusDestRect = {cactus.get_x(), cactus.get_y(), cactus.get_width(), cactus.get_height()};
-    // game loop
     while(true){
         /*
         * poll of events, take care of the events one by one until they all done which the function
@@ -79,17 +101,21 @@ void Game::run(){
             case SDL_QUIT:
                 return;
                 break;
-            
             default:
                 break;
             }
         }
+        // world moving
+        this->track_movement();
+        this->updateDinoAnimation();
         // rendering.
-
         SDL_RenderClear(this->renderer.get());
-        SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), &trackSrcRect, &trackDestRect);
-        SDL_RenderCopy(this->renderer.get(), this->dino_ptr.get(), &dinoSrcRect, &dinoDestRect);
-        SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), &cactusSrcRect, &cactusDestRect);
+        SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect1);
+        SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect2);
+        // function the render the dino movement base on the frame
+        this->renderDino(this->renderer.get());
+        //SDL_RenderCopy(this->renderer.get(), this->dino_ptr.get(), nullptr, &this->dinoDestRect);
+        //SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), nullptr, &this->cactusDestRect);
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);

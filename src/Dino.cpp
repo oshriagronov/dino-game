@@ -14,8 +14,12 @@ int Dino::get_width(){
     return width;
 }
 
-std::string Dino::get_path(){
-    return path;
+std::string Dino::get_path_run1(){
+    return PATH_RUN1;
+}
+
+std::string Dino::get_path_run2(){
+    return PATH_RUN2;
 }
 
 int Dino::get_x(){

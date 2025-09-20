@@ -11,12 +11,12 @@ int Track::get_width(){
     return width;
 }
 
-int Track::get_x(){
-    return x;
+int Track::get_default_x(){
+    return default_x;
 }
 
-int Track::get_y(){
-    return y;
+int Track::get_default_y(){
+    return default_y;
 }
 
 std::string Track::get_path(){

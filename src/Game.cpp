@@ -155,5 +155,9 @@ void Game::run(){
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);
+        //game over check, need to work on game over screen and cleanup here.
+        if(SDL_HasIntersection(&this->dinoDestRect, &this->cactusDestRect)){
+            return;
+        }
     }
 }

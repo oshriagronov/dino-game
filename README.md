@@ -27,6 +27,7 @@ To get a local copy up and running follow these simple steps.
 
 - Linux, MacOS or Windows
 - c++ compiler
+- SDL2 library
 
 ### Installation
 

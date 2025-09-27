@@ -4,6 +4,7 @@
 #include <memory>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include "Dino.h"
 #include "Track.h"
 #include "Cactus.h"
@@ -12,8 +13,10 @@ class Game
 private:
     static constexpr int Height = 600;
     static constexpr int Width = 800;
-    static constexpr int TRACK_SPEED = 5;
+    static constexpr int TRACK_SPEED = 8;
+    static constexpr int FONT_SIZE = 30;
     const std::string title = "Dino Game";
+    SDL_Color textColor = {0, 0, 0, 255}; // Black color
     SDL_Event event;
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window;
     std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)> renderer;
@@ -21,6 +24,9 @@ private:
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> dino_ptr_run1;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> dino_ptr_run2;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> cactus_ptr;
+    std::unique_ptr<TTF_Font, decltype(&TTF_CloseFont)> font_ptr;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> scoreSurface;
+    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> scoreTexture;
     Dino dino;
     Track track;
     Cactus cactus;
@@ -28,6 +34,7 @@ private:
     SDL_Rect trackDestRect2;
     SDL_Rect dinoDestRect;
     SDL_Rect cactusDestRect;
+    SDL_Rect scoreDestRect;
     // game world movement: track, dino run etc
     int floorOffsetX = 0;
     bool useLeftFrame = true;
@@ -38,10 +45,11 @@ private:
     float gravity = 0.5f;     // strength of gravity
     float jumpStrength = -20; // initial upward velocity (negative = up)
     bool isJumping = false;
-
     //cactus section
     const int spawn_point = Width + 100;
-
+    // score section
+    int score = 0;
+    Uint32 lastScoreUpdate = 0; // time of last score update
 public:
     Game();
     void init();
@@ -51,6 +59,8 @@ public:
     void renderDino(SDL_Renderer* renderer);
     void updateDinoRunAnimation();
     void updateDinoAnimation();
+    void updateScore();
+    void renderScore(SDL_Renderer* renderer);
     void updateCactus();
     void renderCactus();
 };

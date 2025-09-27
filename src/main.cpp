@@ -1,6 +1,6 @@
 // g++ main.cpp Game.cpp [more .cpp files] -o demo -LSDL2
 // g++ main.cpp Game.cpp -o demo -lSDL2 -lSDL2main -lSDL2_image
-// g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image
+// g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf
 #include "Game.h"
 void initialize_sdl();
 void close_sdl();
@@ -30,9 +30,14 @@ void initialize_sdl(){
             throw std::runtime_error(
                 std::string("Error initializing SDL_image: ") + IMG_GetError());
         }
+        if (TTF_Init()) {
+            throw std::runtime_error(
+                std::string("Error initializing SDL_ttf: ") + TTF_GetError());
+        }
 }
 
 void close_sdl() {
+    TTF_Quit();
     IMG_Quit(); 
     SDL_Quit(); 
 }

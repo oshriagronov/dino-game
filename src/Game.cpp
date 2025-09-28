@@ -6,9 +6,12 @@ Game::Game():
     dino_ptr_run1{nullptr, SDL_DestroyTexture},
     dino_ptr_run2{nullptr, SDL_DestroyTexture},
     cactus_ptr{nullptr, SDL_DestroyTexture},
-    font_ptr{nullptr, TTF_CloseFont},
+    score_font_ptr{nullptr, TTF_CloseFont},
+    game_over_font_ptr{nullptr, TTF_CloseFont},
     scoreSurface{nullptr, SDL_FreeSurface},
     scoreTexture{nullptr, SDL_DestroyTexture},
+    gameOverSurface{nullptr, SDL_FreeSurface},
+    gameOverTexture{nullptr, SDL_DestroyTexture},
     trackDestRect1{-floorOffsetX, track.get_default_y(), track.get_width(), track.get_height()},
     dinoDestRect{dino.get_x(), dino.get_y(), dino.get_width(), dino.get_height()},
     cactusDestRect{spawn_point, cactus.get_y(), cactus.get_width(), cactus.get_height()},
@@ -63,9 +66,22 @@ void Game::loading_media(){
     if(this->cactus_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
-    this->font_ptr.reset(TTF_OpenFont("assets/ArcadeClassic.ttf", FONT_SIZE));
-    if(this->font_ptr == nullptr){
+    this->score_font_ptr.reset(TTF_OpenFont("assets/ArcadeClassic.ttf", SCORE_FONT_SIZE));
+    if(this->score_font_ptr == nullptr){
         throw std::runtime_error(TTF_GetError());
+    }
+    this->game_over_font_ptr.reset(TTF_OpenFont("assets/ArcadeClassic.ttf", GAME_OVER_FONT_SIZE));
+    if(this->game_over_font_ptr == nullptr){
+        throw std::runtime_error(TTF_GetError());
+    }
+    this->gameOverSurface.reset(TTF_RenderText_Blended(this->game_over_font_ptr.get(), this->GAME_OVER_TEXT.c_str(), textColor));
+    if(this->gameOverSurface == nullptr){
+        throw std::runtime_error(TTF_GetError());
+    }
+    this->gameOverDestRect = {Width / 4 + 10, Height / 3, gameOverSurface->w, gameOverSurface->h};
+    this->gameOverTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->gameOverSurface.get()));
+    if(this->gameOverTexture == nullptr){
+        throw std::runtime_error(SDL_GetError());
     }
 }
 void Game::trackUpdate(){
@@ -122,7 +138,7 @@ void Game::updateScore(){
 }
 
 void Game::renderScore(SDL_Renderer* renderer){
-    this->scoreSurface.reset(TTF_RenderText_Blended(this->font_ptr.get(), std::to_string(score).c_str(), textColor));
+    this->scoreSurface.reset(TTF_RenderText_Blended(this->score_font_ptr.get(), std::to_string(score).c_str(), textColor));
     if(this->scoreSurface == nullptr){
         throw std::runtime_error(TTF_GetError());
     }
@@ -156,7 +172,16 @@ void Game::run(){
                 switch (event.key.keysym.sym)
                 {
                 case SDLK_SPACE:
-                    if(!isJumping){
+                    if(gameOver){
+                        // reset game state
+                        gameOver = false;
+                        score = 0;
+                        cactusDestRect.x = spawn_point;
+                        isJumping = false;
+                        dinoDestRect.y = dino.get_y();
+                        velocityY = 0.0f;
+                    }
+                    else if(!isJumping){
                         isJumping = true;
                         velocityY = jumpStrength;
                     }
@@ -169,13 +194,18 @@ void Game::run(){
                 break;
             }
         }
-        // world moving
-        this->trackUpdate();
-        this->updateDinoAnimation();
-        this->updateCactus();
-        this->updateScore();
-        // rendering.
         SDL_RenderClear(this->renderer.get());
+        if(!gameOver){
+            // world moving
+            this->trackUpdate();
+            this->updateDinoAnimation();
+            this->updateCactus();
+            this->updateScore();
+        }
+        else{
+            SDL_RenderCopy(this->renderer.get(), this->gameOverTexture.get(), nullptr, &this->gameOverDestRect);
+        }
+        // rendering.
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect1);
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect2);
         // function the render the dino movement base on the frame
@@ -188,10 +218,8 @@ void Game::run(){
         // the delay create some what 60fps feeling
         SDL_Delay(16);
         //game over check, need to work on game over screen and cleanup here.
-        /*
-        if(SDL_HasIntersection(&this->dinoDestRect, &this->cactusDestRect)){
-            return;
+        if(!gameOver && SDL_HasIntersection(&this->dinoDestRect, &this->cactusDestRect)){
+            gameOver = true;
         }
-        */
     }
 }

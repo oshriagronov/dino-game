@@ -12,6 +12,8 @@ Game::Game():
     scoreTexture{nullptr, SDL_DestroyTexture},
     gameOverSurface{nullptr, SDL_FreeSurface},
     gameOverTexture{nullptr, SDL_DestroyTexture},
+    gameOverSubTextSurface{nullptr, SDL_FreeSurface},
+    gameOverSubTextTexture{nullptr, SDL_DestroyTexture},
     trackDestRect1{-floorOffsetX, track.get_default_y(), track.get_width(), track.get_height()},
     dinoDestRect{dino.get_x(), dino.get_y(), dino.get_width(), dino.get_height()},
     cactusDestRect{spawn_point, cactus.get_y(), cactus.get_width(), cactus.get_height()},
@@ -81,6 +83,16 @@ void Game::loading_media(){
     this->gameOverDestRect = {Width / 4 + 10, Height / 3, gameOverSurface->w, gameOverSurface->h};
     this->gameOverTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->gameOverSurface.get()));
     if(this->gameOverTexture == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+
+    this->gameOverSubTextSurface.reset(TTF_RenderText_Blended(this->score_font_ptr.get(), this->GAME_OVER_SUB_TEXT.c_str(), textColor));
+    if(this->gameOverSubTextSurface == nullptr){
+        throw std::runtime_error(TTF_GetError());
+    }
+    this->gameOverSubTextDestRect = {Width / 4 + 30, Height / 2, gameOverSubTextSurface->w, gameOverSubTextSurface->h};
+    this->gameOverSubTextTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->gameOverSubTextSurface.get()));
+    if(this->gameOverSubTextTexture == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
 }
@@ -173,7 +185,7 @@ void Game::run(){
                 {
                 case SDLK_SPACE:
                     if(gameOver){
-                        // reset game state
+                        // reset game state when the game is over and space is pressed
                         gameOver = false;
                         score = 0;
                         cactusDestRect.x = spawn_point;
@@ -204,6 +216,7 @@ void Game::run(){
         }
         else{
             SDL_RenderCopy(this->renderer.get(), this->gameOverTexture.get(), nullptr, &this->gameOverDestRect);
+            SDL_RenderCopy(this->renderer.get(), this->gameOverSubTextTexture.get(), nullptr, &this->gameOverSubTextDestRect);
         }
         // rendering.
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect1);
@@ -211,7 +224,6 @@ void Game::run(){
         // function the render the dino movement base on the frame
         this->renderDino(this->renderer.get());
         SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), nullptr, &this->cactusDestRect);
-        //SDL_RenderCopy(this->renderer.get(), this->scoreTexture.get(), nullptr, &this->scoreDestRect);
         this->renderScore(this->renderer.get());
         // present the back buffer
         SDL_RenderPresent(this->renderer.get());

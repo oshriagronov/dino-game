@@ -18,7 +18,7 @@ private:
     static constexpr int GAME_OVER_FONT_SIZE = 80;
     const std::string title = "Dino Game";
     const std::string GAME_OVER_TEXT = "Game Over!";
-    const std::string GAME_OVER_SUB_TEXT = "Press Space to Restart";
+    const std::string GAME_OVER_SUB_TEXT = "Press  Space  to  Restart";
     SDL_Color textColor = {0, 0, 0, 255}; // Black color
     SDL_Event event;
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window;
@@ -33,6 +33,8 @@ private:
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> scoreTexture;
     std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> gameOverSurface;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> gameOverTexture;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> gameOverSubTextSurface;
+    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> gameOverSubTextTexture;
     Dino dino;
     Track track;
     Cactus cactus;
@@ -42,6 +44,7 @@ private:
     SDL_Rect cactusDestRect;
     SDL_Rect scoreDestRect;
     SDL_Rect gameOverDestRect;
+    SDL_Rect gameOverSubTextDestRect;
     // game world movement: track, dino run etc
     int floorOffsetX = 0;
     bool useLeftFrame = true;

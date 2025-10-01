@@ -4,7 +4,7 @@
     <img src="/assets/logo.png" alt="Logo" width="200" height="200">
   </a>
 
-<h3 align="center">T-Rex Runner(still WIP)</h3>
+<h3 align="center">T-Rex Runner - WIP</h3>
   <p align="center">
     A simple C++ clone of Chrome's offline Dinosaur game built with SDL.
   </p>
@@ -35,7 +35,7 @@ To get a local copy up and running follow these simple steps.
 
 ---
 
-1. **Clone and enter the oshri-portfolio repository:**
+1. **Clone and enter the dino-game repository:**
 
    ```bash
    git clone https://github.com/oshriagronov/dino-game && cd dino-game
@@ -44,7 +44,7 @@ To get a local copy up and running follow these simple steps.
 2. **Compile:**
 
    ```bash
-   g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image
+   g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf
    ```
 
 3. **Run:**

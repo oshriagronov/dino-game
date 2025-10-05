@@ -4,7 +4,7 @@
     <img src="/assets/logo.png" alt="Logo" width="200" height="200">
   </a>
 
-<h3 align="center">T-Rex Runner - WIP</h3>
+<h3 align="center">T-Rex Runner</h3>
   <p align="center">
     A simple C++ clone of Chrome's offline Dinosaur game built with SDL.
   </p>

@@ -1,5 +1,3 @@
-// g++ main.cpp Game.cpp [more .cpp files] -o demo -LSDL2
-// g++ main.cpp Game.cpp -o demo -lSDL2 -lSDL2main -lSDL2_image
 // g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf
 #include "Game.h"
 void initialize_sdl();

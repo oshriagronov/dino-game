@@ -5,7 +5,6 @@
 *.out
 *.exe
 demo
-dino
 # Ignore backup files
 *~
 

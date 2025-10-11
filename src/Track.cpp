@@ -1,24 +1,32 @@
 #include "Track.h"
 
-Track::Track(){}
+// Constructor: Initializes the Track object.
+Track::Track() {}
 
-Track::~Track(){}
-int Track::get_height(){
+// Destructor: Cleans up the Track object.
+Track::~Track() {}
+
+// Returns the height of the track sprite.
+int Track::get_height() const {
     return height;
 }
 
-int Track::get_width(){
+// Returns the width of the track sprite.
+int Track::get_width() const {
     return width;
 }
 
-int Track::get_default_x(){
+// Returns the default starting horizontal position of the track.
+int Track::get_default_x() const {
     return default_x;
 }
 
-int Track::get_default_y(){
+// Returns the fixed vertical position of the track.
+int Track::get_default_y() const {
     return default_y;
 }
 
-std::string Track::get_path(){
+// Returns the file path for the track's texture.
+const std::string& Track::get_path() const {
     return path;
 }

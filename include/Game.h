@@ -13,23 +13,31 @@
 class Game
 {
 private:
-    static constexpr int Height = 720;
-    static constexpr int Width = 1280;
-    static constexpr int TRACK_SPEED = 8;
-    static constexpr int SCORE_FONT_SIZE = 30;
-    static constexpr int GAME_OVER_FONT_SIZE = 80;
-    const std::string title = "Dino Game";
-    const std::string GAME_OVER_TEXT = "Game Over!";
-    const std::string GAME_OVER_SUB_TEXT = "Press  Space  to  Restart";
-    //cactus section
-    const int largeCactus1_spawn_point = Width;
-    const int largeCactus2_spawn_point = largeCactus1_spawn_point + 400;
-    const int largeCactus3_spawn_point = largeCactus1_spawn_point + 800;
-    std::random_device rd;
-    std::mt19937 gen;
-    std::uniform_int_distribution<int> dist;
-    SDL_Color textColor = {0, 0, 0, 255}; // Black color
-    SDL_Event event;
+    // --- Game Constants ---
+    static constexpr int Height = 720; // Window height
+    static constexpr int Width = 1280; // Window width
+    static constexpr int TRACK_SPEED = 8; // Horizontal speed of the game world
+    static constexpr int SCORE_FONT_SIZE = 30; // Font size for the score display
+    static constexpr int GAME_OVER_FONT_SIZE = 80; // Font size for the "Game Over" text
+    const std::string title = "Dino Game"; // Window title
+    const std::string GAME_OVER_TEXT = "Game Over!"; // Game over message
+    const std::string GAME_OVER_SUB_TEXT = "Press  Space  to  Restart"; // Restart instruction
+
+    // --- Cactus Properties ---
+    const int largeCactus1_spawn_point = Width; // Initial X position for the first cactus
+    const int largeCactus2_spawn_point = largeCactus1_spawn_point + 400; // Initial X for the second
+    const int largeCactus3_spawn_point = largeCactus1_spawn_point + 800; // Initial X for the third
+
+    // --- Random Number Generation for Cactus Spacing ---
+    std::random_device rd; // Obtains a seed from the hardware
+    std::mt19937 gen; // Standard mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<int> dist; // Generates random distances for cacti
+
+    // --- SDL and Game Objects ---
+    SDL_Color textColor = {0, 0, 0, 255}; // Black color for text rendering
+    SDL_Event event; // Union to handle SDL events
+
+    // Smart pointers for automatic resource management of SDL objects
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window;
     std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)> renderer;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> track_ptr;
@@ -46,11 +54,15 @@ private:
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> gameOverTexture;
     std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> gameOverSubTextSurface;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> gameOverSubTextTexture;
+
+    // Game entity objects
     Dino dino;
     Track track;
     Cactus largeCactus1 = Cactus(95, 48, largeCactus1_spawn_point, "assets/cactus/largeCactus1.png");
     Cactus largeCactus2 = Cactus(95, 99, largeCactus2_spawn_point,"assets/cactus/largeCactus2.png");
     Cactus largeCactus3 = Cactus(95, 102, largeCactus3_spawn_point,"assets/cactus/largeCactus3.png");
+
+    // SDL_Rects for positioning and sizing objects on the screen
     SDL_Rect trackDestRect1;
     SDL_Rect trackDestRect2;
     SDL_Rect dinoDestRect;
@@ -60,33 +72,64 @@ private:
     SDL_Rect scoreDestRect;
     SDL_Rect gameOverDestRect;
     SDL_Rect gameOverSubTextDestRect;
-    // game world movement: track, dino run etc
-    int floorOffsetX = 0;
-    bool useLeftFrame = true;
-    Uint32 lastFrameTime = 0;       // time of last frame switch
-    Uint32 frameInterval = 150;     // how often to switch (ms)
-    // Jumping physics
-    float velocityY = 0.0f;
-    float gravity = 0.5f;     // strength of gravity
-    float jumpStrength = -20; // initial upward velocity (negative = up)
-    bool isJumping = false;
-    // score section
-    int score = 0;
-    Uint32 lastScoreUpdate = 0; // time of last score update
-    // end game flag
-    bool gameOver = false;
+
+    // --- Game State and Logic Variables ---
+    // World movement
+    int floorOffsetX = 0; // Horizontal offset for the scrolling track
+
+    // Dino animation
+    bool useLeftFrame = true; // Toggles between dino's run animation frames
+    Uint32 lastFrameTime = 0; // Time of the last animation frame switch
+    Uint32 frameInterval = 150; // How often to switch animation frames (ms)
+
+    // Dino jumping physics
+    float velocityY = 0.0f; // Current vertical velocity of the dino
+    float gravity = 0.5f; // Downward acceleration applied each frame
+    float jumpStrength = -20; // Initial upward velocity for a jump
+    bool isJumping = false; // Flag to check if the dino is currently jumping
+
+    // Score
+    int score = 0; // Player's current score
+    Uint32 lastScoreUpdate = 0; // Time of the last score increment
+
+    // Game state
+    bool gameOver = false; // Flag to indicate if the game is over
+
 public:
+    // Constructor
     Game();
+
+    // Initializes SDL, the window, and the renderer
     void init();
+
+    // Loads all media (textures, fonts)
     void loading_media();
+
+    // Contains the main game loop
     void run();
+
+    // Updates the position of the track to create a scrolling effect
     void trackUpdate();
+
+    // Renders the dinosaur to the screen
     void renderDino(SDL_Renderer* renderer);
+
+    // Updates the dinosaur's running animation frame
     void updateDinoRunAnimation();
+
+    // Updates the dinosaur's state (jumping or running)
     void updateDinoAnimation();
+
+    // Increments the score over time
     void updateScore();
+
+    // Renders the current score to the screen
     void renderScore(SDL_Renderer* renderer);
+
+    // Updates the positions of the cacti
     void updateCactus();
+
+    // Renders the cacti (currently empty)
     void renderCactus();
 };
 

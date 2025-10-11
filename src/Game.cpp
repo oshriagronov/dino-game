@@ -1,4 +1,6 @@
 #include "Game.h"
+
+// Constructor: Initializes all member variables, especially the smart pointers and SDL_Rects.
 Game::Game():
     window{nullptr, SDL_DestroyWindow},
     renderer{nullptr, SDL_DestroyRenderer}, 
@@ -27,7 +29,7 @@ Game::Game():
     trackDestRect2{-floorOffsetX + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
 {}
 
-
+// Initializes the SDL window and renderer.
 void Game::init()
 {
     this->window.reset(SDL_CreateWindow(
@@ -50,6 +52,7 @@ void Game::init()
     SDL_SetRenderDrawColor(this->renderer.get(), 255, 255, 255, 255);
 }
 
+// Loads all necessary media files (textures and fonts) into memory.
 void Game::loading_media(){
     this->track_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
@@ -99,7 +102,7 @@ void Game::loading_media(){
     if(this->gameOverSurface == nullptr){
         throw std::runtime_error(TTF_GetError());
     }
-    this->gameOverDestRect = {Width / 4 + 10, Height / 3, gameOverSurface->w, gameOverSurface->h};
+    this->gameOverDestRect = {Width / 3 + 30, Height / 3, gameOverSurface->w, gameOverSurface->h};
     this->gameOverTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->gameOverSurface.get()));
     if(this->gameOverTexture == nullptr){
         throw std::runtime_error(SDL_GetError());
@@ -109,12 +112,14 @@ void Game::loading_media(){
     if(this->gameOverSubTextSurface == nullptr){
         throw std::runtime_error(TTF_GetError());
     }
-    this->gameOverSubTextDestRect = {Width / 4 + 30, Height / 2, gameOverSubTextSurface->w, gameOverSubTextSurface->h};
+    this->gameOverSubTextDestRect = {Width / 3 + 40, Height / 3 + 70, gameOverSubTextSurface->w, gameOverSubTextSurface->h};
     this->gameOverSubTextTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->gameOverSubTextSurface.get()));
     if(this->gameOverSubTextTexture == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
 }
+
+// Updates the track's position to create an infinite scrolling effect.
 void Game::trackUpdate(){
     floorOffsetX += TRACK_SPEED;
     if (floorOffsetX >= track.get_width()) {
@@ -123,6 +128,8 @@ void Game::trackUpdate(){
     this->trackDestRect1.x = -floorOffsetX + 5;
     this->trackDestRect2.x = -floorOffsetX + track.get_width();
 }
+
+// Toggles between the two running animation frames for the dinosaur.
 void Game::updateDinoRunAnimation(){
     Uint32 now = SDL_GetTicks();
     if (now - lastFrameTime > frameInterval) {
@@ -131,6 +138,7 @@ void Game::updateDinoRunAnimation(){
     }
 }
 
+// Manages the dinosaur's vertical movement for jumping and applies gravity.
 void Game::updateDinoAnimation(){
     if(isJumping){
         dinoDestRect.y += (int)velocityY;
@@ -146,6 +154,7 @@ void Game::updateDinoAnimation(){
     velocityY += gravity;
 }
 
+// Renders the correct dinosaur animation frame to the screen.
 void Game::renderDino(SDL_Renderer* renderer){
     if(useLeftFrame)
         SDL_RenderCopy(renderer, this->dino_ptr_run1.get(), nullptr, &this->dinoDestRect);
@@ -153,6 +162,7 @@ void Game::renderDino(SDL_Renderer* renderer){
         SDL_RenderCopy(renderer, this->dino_ptr_run2.get(), nullptr, &this->dinoDestRect);
 }
 
+// Updates the position of the cacti, moving them from right to left.
 void Game::updateCactus(){
     if(largeCactus1DestRect.x > -largeCactus1.get_width())
         largeCactus1DestRect.x -= TRACK_SPEED;
@@ -178,6 +188,7 @@ void Game::updateScore(){
     }
 }
 
+// Renders the current score to the top-left of the screen.
 void Game::renderScore(SDL_Renderer* renderer){
     this->scoreSurface.reset(TTF_RenderText_Blended(this->score_font_ptr.get(), std::to_string(score).c_str(), textColor));
     if(this->scoreSurface == nullptr){
@@ -192,13 +203,14 @@ void Game::renderScore(SDL_Renderer* renderer){
 }
 
 void Game::renderCactus(){}
-// game loop
+
+// The main game loop where all game logic, event handling, and rendering happens.
 void Game::run(){
-    // continuos loop   
+    // Continuous loop that runs until the game is quit.
     while(true){
         /*
-        * poll of events, take care of the events one by one until they all done which the function
-        * will return 0 when there no events to take care of, and 1 when there still events to take care of.
+        * Poll for events. SDL_PollEvent returns 1 if there is a pending event,
+        * and 0 if there are none. The loop continues until the event queue is empty.
         */ 
         while (SDL_PollEvent(&this->event))
         {
@@ -209,12 +221,13 @@ void Game::run(){
             case SDL_QUIT:
                 return;
                 break;
+            // Handle keyboard input
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym)
                 {
                 case SDLK_SPACE:
                     if(gameOver){
-                        // reset game state when the game is over and space is pressed
+                        // Reset game state when the game is over and space is pressed.
                         gameOver = false;
                         score = 0;
                         largeCactus1DestRect.x = largeCactus1_spawn_point;
@@ -224,6 +237,7 @@ void Game::run(){
                         dinoDestRect.y = dino.get_y();
                         velocityY = 0.0f;
                     }
+                    // If not game over and not already jumping, initiate a jump.
                     else if(!isJumping){
                         isJumping = true;
                         velocityY = jumpStrength;
@@ -237,33 +251,40 @@ void Game::run(){
                 break;
             }
         }
-        // clear screen to white
+        // Clear the renderer with the draw color (white).
         SDL_RenderClear(this->renderer.get());
 
+        // --- Game Logic Update ---
         if(!gameOver){
-            // world moving
+            // Update all game elements if the game is active.
             this->trackUpdate();
             this->updateDinoAnimation();
             this->updateCactus();
             this->updateScore();
         }
         else{
+            // If the game is over, display the "Game Over" text.
             SDL_RenderCopy(this->renderer.get(), this->gameOverTexture.get(), nullptr, &this->gameOverDestRect);
             SDL_RenderCopy(this->renderer.get(), this->gameOverSubTextTexture.get(), nullptr, &this->gameOverSubTextDestRect);
         }
-        // rendering.
+
+        // --- Rendering ---
+        // Render the scrolling track.
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect1);
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect2);
+        // Render the dinosaur.
         this->renderDino(this->renderer.get());
+        // Render the cacti.
         SDL_RenderCopy(this->renderer.get(), this->largeCactus1_ptr.get(), nullptr, &this->largeCactus1DestRect);
         SDL_RenderCopy(this->renderer.get(), this->largeCactus2_ptr.get(), nullptr, &this->largeCactus2DestRect);
         SDL_RenderCopy(this->renderer.get(), this->largeCactus3_ptr.get(), nullptr, &this->largeCactus3DestRect);
+        // Render the score.
         this->renderScore(this->renderer.get());
-        // present the back buffer
+        // Present the back buffer to the screen to show the rendered frame.
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);
-        //game over check, need to work on game over screen and cleanup here.
+        // Check for collisions to trigger the game over state.
         if(!gameOver && (SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus1DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus2DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus3DestRect))){
             gameOver = true;
         }

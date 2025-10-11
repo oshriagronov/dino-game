@@ -1,28 +1,40 @@
 #include "Cactus.h"
-Cactus::Cactus(int height, int width, int x,std::string path){
-    this->height = height;
-    this->width = width;
-    this->path = path;
-    this->x = x;
+
+// Constructor: Initializes a Cactus object using a member initializer list.
+// This is more efficient than assigning values inside the constructor body.
+Cactus::Cactus(int height, int width, int x, std::string path): 
+    x(x),
+    height(height),
+    width(width),
+    path(path) 
+{
 }
 
-Cactus::~Cactus(){}
-int Cactus::get_height(){
+// Destructor: Cleans up the Cactus object. Currently empty as no dynamic memory is managed directly by this class.
+Cactus::~Cactus() {}
+
+// Returns the height of the cactus.
+int Cactus::get_height() const {
     return height;
 }
 
-int Cactus::get_width(){
+// Returns the width of the cactus.
+int Cactus::get_width() const {
     return width;
 }
 
-int Cactus::get_x(){
+// Returns the current horizontal position of the cactus.
+int Cactus::get_x() const {
     return x;
 }
 
-int Cactus::get_y(){
+// Returns the fixed vertical position of the cactus.
+int Cactus::get_y() const {
     return y;
 }
 
-std::string Cactus::get_path(){
+// Returns the file path for the cactus's texture.
+// Returning by const reference avoids making a copy of the string.
+const std::string& Cactus::get_path() const {
     return path;
 }

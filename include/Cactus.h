@@ -4,13 +4,13 @@
 class Cactus
 {
     private:
-        static constexpr int height = 95;
-        static constexpr int width = 48;
-        static constexpr int x = 500;
-        static constexpr int y = 430;
-        const std::string path = "assets/cactus/largeCactus1.png";
+        const int y = 430;
+        int x;
+        int height;
+        int width;
+        std::string path;
     public:
-        Cactus();
+        Cactus(int height, int width, int x, std::string path);
         ~Cactus();
         int get_height();
         int get_width();

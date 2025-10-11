@@ -1,5 +1,10 @@
 #include "Cactus.h"
-Cactus::Cactus(){}
+Cactus::Cactus(int height, int width, int x,std::string path){
+    this->height = height;
+    this->width = width;
+    this->path = path;
+    this->x = x;
+}
 
 Cactus::~Cactus(){}
 int Cactus::get_height(){

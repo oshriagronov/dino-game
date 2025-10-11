@@ -5,7 +5,9 @@ Game::Game():
     track_ptr{nullptr, SDL_DestroyTexture},
     dino_ptr_run1{nullptr, SDL_DestroyTexture},
     dino_ptr_run2{nullptr, SDL_DestroyTexture},
-    cactus_ptr{nullptr, SDL_DestroyTexture},
+    largeCactus1_ptr{nullptr, SDL_DestroyTexture},
+    largeCactus2_ptr{nullptr, SDL_DestroyTexture},
+    largeCactus3_ptr{nullptr, SDL_DestroyTexture},
     score_font_ptr{nullptr, TTF_CloseFont},
     game_over_font_ptr{nullptr, TTF_CloseFont},
     scoreSurface{nullptr, SDL_FreeSurface},
@@ -14,9 +16,14 @@ Game::Game():
     gameOverTexture{nullptr, SDL_DestroyTexture},
     gameOverSubTextSurface{nullptr, SDL_FreeSurface},
     gameOverSubTextTexture{nullptr, SDL_DestroyTexture},
+    rd{},
+    gen{rd()},
+    dist{Width + 300, Width + 600},
     trackDestRect1{-floorOffsetX, track.get_default_y(), track.get_width(), track.get_height()},
     dinoDestRect{dino.get_x(), dino.get_y(), dino.get_width(), dino.get_height()},
-    cactusDestRect{spawn_point, cactus.get_y(), cactus.get_width(), cactus.get_height()},
+    largeCactus1DestRect{largeCactus1_spawn_point, largeCactus1.get_y(), largeCactus1.get_width(), largeCactus1.get_height()},
+    largeCactus2DestRect{largeCactus2_spawn_point, largeCactus2.get_y(), largeCactus2.get_width(), largeCactus2.get_height()},
+    largeCactus3DestRect{largeCactus3_spawn_point, largeCactus3.get_y(), largeCactus3.get_width(), largeCactus3.get_height()},
     trackDestRect2{-floorOffsetX + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
 {}
 
@@ -62,10 +69,22 @@ void Game::loading_media(){
     if(this->dino_ptr_run2 == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
-    this->cactus_ptr.reset(IMG_LoadTexture(
+    this->largeCactus1_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        cactus.get_path().c_str()));
-    if(this->cactus_ptr == nullptr){
+        largeCactus1.get_path().c_str()));
+    if(this->largeCactus1_ptr == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+    this->largeCactus2_ptr.reset(IMG_LoadTexture(
+        this->renderer.get(), 
+        largeCactus2.get_path().c_str()));
+    if(this->largeCactus2_ptr == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+    this->largeCactus3_ptr.reset(IMG_LoadTexture(
+        this->renderer.get(), 
+        largeCactus3.get_path().c_str()));
+    if(this->largeCactus3_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->score_font_ptr.reset(TTF_OpenFont("assets/ArcadeClassic.ttf", SCORE_FONT_SIZE));
@@ -135,10 +154,20 @@ void Game::renderDino(SDL_Renderer* renderer){
 }
 
 void Game::updateCactus(){
-    if(cactusDestRect.x > -cactus.get_width())
-        cactusDestRect.x -= TRACK_SPEED;
+    if(largeCactus1DestRect.x > -largeCactus1.get_width())
+        largeCactus1DestRect.x -= TRACK_SPEED;
     else
-        cactusDestRect.x = spawn_point;
+        largeCactus1DestRect.x = largeCactus1_spawn_point;
+    
+    if(largeCactus2DestRect.x > -largeCactus2.get_width())
+        largeCactus2DestRect.x -= TRACK_SPEED;
+    else
+        largeCactus2DestRect.x = largeCactus1DestRect.x + dist(gen);
+
+    if(largeCactus3DestRect.x > -largeCactus3.get_width())
+        largeCactus3DestRect.x -= TRACK_SPEED;
+    else
+        largeCactus3DestRect.x = largeCactus2DestRect.x  + dist(gen);
 }
 
 void Game::updateScore(){
@@ -188,7 +217,9 @@ void Game::run(){
                         // reset game state when the game is over and space is pressed
                         gameOver = false;
                         score = 0;
-                        cactusDestRect.x = spawn_point;
+                        largeCactus1DestRect.x = largeCactus1_spawn_point;
+                        largeCactus2DestRect.x = largeCactus2_spawn_point;
+                        largeCactus3DestRect.x = largeCactus3_spawn_point;
                         isJumping = false;
                         dinoDestRect.y = dino.get_y();
                         velocityY = 0.0f;
@@ -206,7 +237,9 @@ void Game::run(){
                 break;
             }
         }
+        // clear screen to white
         SDL_RenderClear(this->renderer.get());
+
         if(!gameOver){
             // world moving
             this->trackUpdate();
@@ -221,16 +254,17 @@ void Game::run(){
         // rendering.
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect1);
         SDL_RenderCopy(this->renderer.get(), this->track_ptr.get(), nullptr, &this->trackDestRect2);
-        // function the render the dino movement base on the frame
         this->renderDino(this->renderer.get());
-        SDL_RenderCopy(this->renderer.get(), this->cactus_ptr.get(), nullptr, &this->cactusDestRect);
+        SDL_RenderCopy(this->renderer.get(), this->largeCactus1_ptr.get(), nullptr, &this->largeCactus1DestRect);
+        SDL_RenderCopy(this->renderer.get(), this->largeCactus2_ptr.get(), nullptr, &this->largeCactus2DestRect);
+        SDL_RenderCopy(this->renderer.get(), this->largeCactus3_ptr.get(), nullptr, &this->largeCactus3DestRect);
         this->renderScore(this->renderer.get());
         // present the back buffer
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);
         //game over check, need to work on game over screen and cleanup here.
-        if(!gameOver && SDL_HasIntersection(&this->dinoDestRect, &this->cactusDestRect)){
+        if(!gameOver && (SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus1DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus2DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus3DestRect))){
             gameOver = true;
         }
     }

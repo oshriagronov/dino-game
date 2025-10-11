@@ -18,6 +18,8 @@ This project is a C++ recreation of Chrome's classic offline Dinosaur game, deve
 
 - C++
 - SDL2
+- memory
+- random
 
 ## Getting Started
 
@@ -26,9 +28,7 @@ To get a local copy up and running follow these simple steps.
 ### Prerequisites
 
 - Linux, MacOS or Windows
-- c++ compiler
-- memory
-- random
+- C++ compiler
 - SDL2 library - SDL2, SDL_image, SDL2_ttf
 
 > SDL2 installation guide can be found [here](https://wiki.libsdl.org/SDL2/Installation)

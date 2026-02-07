@@ -1,4 +1,21 @@
 #include "Game.h"
+#include <filesystem>
+
+namespace {
+std::filesystem::path get_base_path() {
+    char* base_path = SDL_GetBasePath();
+    if (base_path != nullptr) {
+        std::filesystem::path path(base_path);
+        SDL_free(base_path);
+        return path;
+    }
+    return std::filesystem::current_path();
+}
+
+std::string asset_path(const std::filesystem::path& base, const std::string& relative) {
+    return (base / relative).string();
+}
+} // namespace
 
 // Constructor: Initializes all member variables, especially the smart pointers and SDL_Rects.
 Game::Game():
@@ -21,12 +38,12 @@ Game::Game():
     rd{},
     gen{rd()},
     dist{Width + 300, Width + 600},
-    trackDestRect1{-floorOffsetX, track.get_default_y(), track.get_width(), track.get_height()},
+    trackDestRect1{track.get_default_x(), track.get_default_y(), track.get_width(), track.get_height()},
     dinoDestRect{dino.get_x(), dino.get_y(), dino.get_width(), dino.get_height()},
     largeCactus1DestRect{largeCactus1_spawn_point, largeCactus1.get_y(), largeCactus1.get_width(), largeCactus1.get_height()},
     largeCactus2DestRect{largeCactus2_spawn_point, largeCactus2.get_y(), largeCactus2.get_width(), largeCactus2.get_height()},
     largeCactus3DestRect{largeCactus3_spawn_point, largeCactus3.get_y(), largeCactus3.get_width(), largeCactus3.get_height()},
-    trackDestRect2{-floorOffsetX + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
+    trackDestRect2{track.get_default_x() + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
 {}
 
 // Initializes the SDL window and renderer.
@@ -54,47 +71,48 @@ void Game::init()
 
 // Loads all necessary media files (textures and fonts) into memory.
 void Game::loading_media(){
+    const auto base_path = get_base_path();
     this->track_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        track.get_path().c_str()));
+        asset_path(base_path, track.get_path()).c_str()));
     if(this->track_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->dino_ptr_run1.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        dino.get_path_run1().c_str()));
+        asset_path(base_path, dino.get_path_run1()).c_str()));
     if(this->dino_ptr_run1 == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->dino_ptr_run2.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        dino.get_path_run2().c_str()));
+        asset_path(base_path, dino.get_path_run2()).c_str()));
     if(this->dino_ptr_run2 == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->largeCactus1_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        largeCactus1.get_path().c_str()));
+        asset_path(base_path, largeCactus1.get_path()).c_str()));
     if(this->largeCactus1_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->largeCactus2_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        largeCactus2.get_path().c_str()));
+        asset_path(base_path, largeCactus2.get_path()).c_str()));
     if(this->largeCactus2_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->largeCactus3_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        largeCactus3.get_path().c_str()));
+        asset_path(base_path, largeCactus3.get_path()).c_str()));
     if(this->largeCactus3_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
-    this->score_font_ptr.reset(TTF_OpenFont("assets/ArcadeClassic.ttf", SCORE_FONT_SIZE));
+    this->score_font_ptr.reset(TTF_OpenFont(asset_path(base_path, "assets/ArcadeClassic.ttf").c_str(), SCORE_FONT_SIZE));
     if(this->score_font_ptr == nullptr){
         throw std::runtime_error(TTF_GetError());
     }
-    this->game_over_font_ptr.reset(TTF_OpenFont("assets/ArcadeClassic.ttf", GAME_OVER_FONT_SIZE));
+    this->game_over_font_ptr.reset(TTF_OpenFont(asset_path(base_path, "assets/ArcadeClassic.ttf").c_str(), GAME_OVER_FONT_SIZE));
     if(this->game_over_font_ptr == nullptr){
         throw std::runtime_error(TTF_GetError());
     }

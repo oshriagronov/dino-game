@@ -12,6 +12,12 @@ demo
 /build/
 /bin/
 /obj/
+/dist/
+/AppDir/
+/installer/
+/appimagetool
+*.AppImage
+/vcpkg_installed/
 
 # Ignore macOS system files
 .DS_Store

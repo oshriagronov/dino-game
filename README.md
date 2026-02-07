@@ -18,42 +18,122 @@ This project is a C++ recreation of Chrome's classic offline Dinosaur game, deve
 
 - C++
 - SDL2
-- memory
-- random
+- CMake
+- vcpkg
 
-## Getting Started
+## Download and Play
 
-To get a local copy up and running follow these simple steps.
+From GitHub Releases, download the package for your platform:
+
+- **Windows installer:** `dino-game-setup-<version>.exe`
+- **Windows portable:** `dino-game-windows-portable.zip`
+- **macOS portable:** `dino-game-macos-portable.zip`
+- **Linux portable:** `dino-game-linux-portable.zip`
+- **Linux AppImage:** `dino-game-linux-x86_64.AppImage`
+
+## Manual Build and Test (Local)
 
 ### Prerequisites
 
-- Linux, MacOS or Windows
+- Linux, macOS, or Windows
 - C++ compiler
-- SDL2 library - SDL2, SDL_image, SDL2_ttf
+- CMake 3.21+
+- vcpkg
 
-> SDL2 installation guide can be found [here](https://wiki.libsdl.org/SDL2/Installation)
+### 1. Clone
 
-### Installation
+```bash
+git clone https://github.com/oshriagronov/dino-game && cd dino-game
+```
 
----
+### 2. Configure
 
-1. **Clone and enter the dino-game repository:**
+Use the vcpkg toolchain and a platform triplet:
 
-   ```bash
-   git clone https://github.com/oshriagronov/dino-game && cd dino-game
-   ```
+- Linux: `x64-linux`
+- macOS Apple Silicon: `arm64-osx`
+- macOS Intel: `x64-osx`
+- Windows: `x64-windows`
 
-2. **Compile:**
+```bash
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DVCPKG_TARGET_TRIPLET=<triplet>
+```
 
-   ```bash
-   g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf
-   ```
+### 3. Build
 
-3. **Run:**
+```bash
+cmake --build build --config Release
+```
 
-   ```bash
-   ./demo
-   ```
+### 4. Install to a runnable folder
+
+```bash
+cmake --install build --config Release --prefix dist
+```
+
+### 5. Run
+
+- Windows: `dist\dino-game.exe`
+- macOS: `open dist/dino-game.app`
+- Linux: `./dist/dino-game`
+
+## Local Packaging
+
+### Linux AppImage
+
+From the project root:
+
+```bash
+mkdir -p AppDir/usr/bin
+cp -a dist/. AppDir/usr/bin/
+cp packaging/linux/AppRun AppDir/AppRun
+cp packaging/linux/dino-game.desktop AppDir/dino-game.desktop
+cp assets/logo.png AppDir/dino-game.png
+mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+cp assets/logo.png AppDir/usr/share/icons/hicolor/256x256/apps/dino-game.png
+wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+chmod +x appimagetool
+ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir dino-game-linux-x86_64.AppImage
+```
+
+Run it:
+
+```bash
+chmod +x dino-game-linux-x86_64.AppImage
+./dino-game-linux-x86_64.AppImage
+```
+
+### Windows Installer (`.exe`)
+
+1. Install **Inno Setup 6**.
+2. Build and install to `dist` as shown above.
+3. Compile installer script:
+
+```powershell
+iscc /DMyAppVersion=0.1.0 packaging\windows\dino-game.iss
+```
+
+The installer will be generated under `installer\`.
+
+## Test Checklist
+
+After any local build/package, test these quickly:
+
+1. Game window opens.
+2. Space key jumps.
+3. Collision triggers game over.
+4. Space restarts after game over.
+5. No missing textures/fonts.
+
+## CI/CD Release Flow
+
+A GitHub Action builds and packages all platforms.
+
+- Manual run: trigger `Build and Package` workflow.
+- Tagged release: push a tag like `v0.1.0` and artifacts are attached automatically.
 
 ## Acknowledgements
 

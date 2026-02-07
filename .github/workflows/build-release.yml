@@ -1,0 +1,175 @@
+name: Build and Package
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+            artifact: windows
+          - os: macos-latest
+            triplet: arm64-osx
+            artifact: macos
+          - os: ubuntu-latest
+            triplet: x64-linux
+            artifact: linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set app version
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            echo "APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "APP_VERSION=0.1.0-dev" >> "$GITHUB_ENV"
+          fi
+
+      - name: Checkout vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          path: vcpkg
+
+      - name: Bootstrap vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: .\vcpkg\bootstrap-vcpkg.bat
+        shell: cmd
+
+      - name: Bootstrap vcpkg (Unix)
+        if: runner.os != 'Windows'
+        run: ./vcpkg/bootstrap-vcpkg.sh
+        shell: bash
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
+          -DCMAKE_TOOLCHAIN_FILE=%GITHUB_WORKSPACE%\vcpkg\scripts\buildsystems\vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+        shell: cmd
+
+      - name: Configure (Unix)
+        if: runner.os != 'Windows'
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+        shell: bash
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cmake --build build --config %BUILD_TYPE%
+        shell: cmd
+
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        run: cmake --build build --config ${BUILD_TYPE}
+        shell: bash
+
+      - name: Install (Windows)
+        if: runner.os == 'Windows'
+        run: cmake --install build --config %BUILD_TYPE% --prefix dist
+        shell: cmd
+
+      - name: Install (Unix)
+        if: runner.os != 'Windows'
+        run: cmake --install build --config ${BUILD_TYPE} --prefix dist
+        shell: bash
+
+      - name: Package portable zip (Windows)
+        if: runner.os == 'Windows'
+        run: cmake -E tar cfv dino-game-windows-portable.zip --format=zip dist
+        shell: cmd
+
+      - name: Package portable zip (Unix)
+        if: runner.os != 'Windows'
+        run: cmake -E tar cfv dino-game-${{ matrix.artifact }}-portable.zip --format=zip dist
+        shell: bash
+
+      - name: Build installer (Windows)
+        if: runner.os == 'Windows'
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: packaging/windows/dino-game.iss
+          options: /DMyAppVersion=${{ env.APP_VERSION }}
+
+      - name: Build AppImage (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p AppDir/usr/bin
+          cp -a dist/. AppDir/usr/bin/
+
+          cp packaging/linux/AppRun AppDir/AppRun
+          chmod +x AppDir/AppRun
+          cp packaging/linux/dino-game.desktop AppDir/dino-game.desktop
+          cp assets/logo.png AppDir/dino-game.png
+
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          cp assets/logo.png AppDir/usr/share/icons/hicolor/256x256/apps/dino-game.png
+
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir dino-game-linux-x86_64.AppImage
+
+      - name: Collect artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts | Out-Null
+          Copy-Item dino-game-windows-portable.zip artifacts/
+          Copy-Item installer/*.exe artifacts/
+
+      - name: Collect artifacts (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp dino-game-linux-portable.zip artifacts/
+          cp dino-game-linux-x86_64.AppImage artifacts/
+
+      - name: Collect artifacts (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp dino-game-macos-portable.zip artifacts/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dino-game-${{ matrix.artifact }}
+          path: artifacts/*
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.AppImage
+            artifacts/**/*.exe

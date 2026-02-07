@@ -3,9 +3,15 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#if __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#else
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
+#endif
 #include "Dino.h"
 #include "Track.h"
 #include "Cactus.h"

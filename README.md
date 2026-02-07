@@ -25,11 +25,9 @@ This project is a C++ recreation of Chrome's classic offline Dinosaur game, deve
 
 From GitHub Releases, download the package for your platform:
 
-- **Windows installer:** `dino-game-setup-<version>.exe`
-- **Windows portable:** `dino-game-windows-portable.zip`
+- **Windows portable:** `dino-game-windows-portable.zip` (extract and double-click `dino-game.exe`)
 - **macOS portable:** `dino-game-macos-portable.zip`
-- **Linux portable:** `dino-game-linux-portable.zip`
-- **Linux AppImage:** `dino-game-linux-x86_64.AppImage`
+- **Linux AppImage:** `dino-game-linux-x86_64.AppImage` (single file, no install; if needed run `chmod +x dino-game-linux-x86_64.AppImage` once)
 
 ## Manual Build and Test (Local)
 
@@ -106,17 +104,15 @@ chmod +x dino-game-linux-x86_64.AppImage
 ./dino-game-linux-x86_64.AppImage
 ```
 
-### Windows Installer (`.exe`)
+### Windows Portable Zip
 
-1. Install **Inno Setup 6**.
-2. Build and install to `dist` as shown above.
-3. Compile installer script:
+Build and install to `dist`, then zip that folder:
 
 ```powershell
-iscc /DMyAppVersion=0.1.0 packaging\windows\dino-game.iss
+cmake -E tar cfv dino-game-windows-portable.zip --format=zip dist
 ```
 
-The installer will be generated under `installer\`.
+Users only need to extract and run `dino-game.exe`.
 
 ## Test Checklist
 

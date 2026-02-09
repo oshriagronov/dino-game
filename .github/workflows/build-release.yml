@@ -89,6 +89,13 @@ jobs:
         run: cmake --install build --config ${BUILD_TYPE} --prefix dist
         shell: bash
 
+      - name: Re-sign macOS app bundle
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep --sign - dist/dino-game.app
+          codesign --verify --deep --strict --verbose=2 dist/dino-game.app
+        shell: bash
+
       - name: Package portable zip (Windows)
         if: runner.os == 'Windows'
         run: cmake -E tar cfv dino-game-windows-portable.zip --format=zip dist
@@ -96,7 +103,7 @@ jobs:
 
       - name: Package portable zip (macOS)
         if: runner.os == 'macOS'
-        run: cmake -E tar cfv dino-game-macos-portable.zip --format=zip dist
+        run: ditto -c -k --sequesterRsrc --keepParent dist/dino-game.app dino-game-macos-portable.zip
         shell: bash
 
       - name: Build AppImage (Linux)

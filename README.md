@@ -117,24 +117,6 @@ cmake -E tar cfv dino-game-windows-portable.zip --format=zip dist
 
 Users only need to extract and run `dino-game.exe`.
 
-## Test Checklist
-
-After any local build/package, test these quickly:
-
-1. Game window opens.
-2. Space key jumps.
-3. Collision triggers game over.
-4. Space restarts after game over.
-5. No missing textures/fonts.
-
-## CI/CD Release Flow
-
-A GitHub Action builds and packages all platforms.
-
-- Manual run: trigger `Build and Package` workflow.
-- Tagged release: push a tag like `v0.1.0` and artifacts are attached automatically.
-- macOS release bundle is re-signed and zipped with `ditto` during CI packaging.
-
 ## Acknowledgements
 
 I would like to thank the youtuber "Programming Rainbow" for creating the great playlist "Beginners Guide to SDL2 in C++", that helped me a lot.

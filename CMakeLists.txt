@@ -45,7 +45,7 @@ install(TARGETS dino-game
 if(APPLE)
   install(
     DIRECTORY assets
-    DESTINATION dino-game.app/Contents/MacOS
+    DESTINATION dino-game.app/Contents/Resources
     PATTERN ".DS_Store" EXCLUDE
   )
 else()

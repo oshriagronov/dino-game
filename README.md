@@ -26,8 +26,14 @@ This project is a C++ recreation of Chrome's classic offline Dinosaur game, deve
 From GitHub Releases, download the package for your platform:
 
 - **Windows portable:** `dino-game-windows-portable.zip` (extract and double-click `dino-game.exe`)
-- **macOS portable:** `dino-game-macos-portable.zip`
+- **macOS portable:** `dino-game-macos-portable.zip` (unzip and open `dino-game.app`)
 - **Linux AppImage:** `dino-game-linux-x86_64.AppImage` (single file, no install; if needed run `chmod +x dino-game-linux-x86_64.AppImage` once)
+
+If macOS says the app is damaged or blocked, run once:
+
+```bash
+xattr -dr com.apple.quarantine dino-game.app
+```
 
 ## Manual Build and Test (Local)
 
@@ -54,10 +60,7 @@ Use the vcpkg toolchain and a platform triplet:
 - Windows: `x64-windows`
 
 ```bash
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DVCPKG_TARGET_TRIPLET=<triplet>
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=<triplet>
 ```
 
 ### 3. Build
@@ -130,6 +133,7 @@ A GitHub Action builds and packages all platforms.
 
 - Manual run: trigger `Build and Package` workflow.
 - Tagged release: push a tag like `v0.1.0` and artifacts are attached automatically.
+- macOS release bundle is re-signed and zipped with `ditto` during CI packaging.
 
 ## Acknowledgements
 

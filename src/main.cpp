@@ -6,7 +6,9 @@ void initialize_sdl();
 void close_sdl();
 
 // Main entry point of the application
-int main(){
+int main(int argc, char* argv[]){
+    (void)argc;
+    (void)argv;
     try
     {
         // Initialize all SDL subsystems

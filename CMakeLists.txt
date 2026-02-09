@@ -16,6 +16,39 @@ find_package(SDL2 REQUIRED CONFIG)
 find_package(SDL2_image REQUIRED CONFIG)
 find_package(SDL2_ttf REQUIRED CONFIG)
 
+function(require_first_target out_var)
+  foreach(candidate IN LISTS ARGN)
+    if(TARGET "${candidate}")
+      set(${out_var} "${candidate}" PARENT_SCOPE)
+      return()
+    endif()
+  endforeach()
+
+  message(FATAL_ERROR "None of the expected targets were found: ${ARGN}")
+endfunction()
+
+require_first_target(SDL2_CORE_TARGET
+  SDL2::SDL2
+  SDL2::SDL2-static
+)
+
+require_first_target(SDL2_IMAGE_TARGET
+  SDL2_image::SDL2_image
+  SDL2_image::SDL2_image-static
+)
+
+require_first_target(SDL2_TTF_TARGET
+  SDL2_ttf::SDL2_ttf
+  SDL2_ttf::SDL2_ttf-static
+)
+
+if(WIN32)
+  require_first_target(SDL2_MAIN_TARGET
+    SDL2::SDL2main
+    SDL2::SDL2main-static
+  )
+endif()
+
 add_executable(dino-game
   src/Cactus.cpp
   src/Dino.cpp
@@ -27,11 +60,14 @@ add_executable(dino-game
 target_include_directories(dino-game PRIVATE include)
 
 target_link_libraries(dino-game PRIVATE
-  SDL2::SDL2
-  SDL2::SDL2main
-  SDL2_image::SDL2_image
-  SDL2_ttf::SDL2_ttf
+  ${SDL2_CORE_TARGET}
+  ${SDL2_IMAGE_TARGET}
+  ${SDL2_TTF_TARGET}
 )
+
+if(WIN32)
+  target_link_libraries(dino-game PRIVATE ${SDL2_MAIN_TARGET})
+endif()
 
 if(APPLE)
   set_target_properties(dino-game PROPERTIES MACOSX_BUNDLE TRUE)

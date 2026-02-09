@@ -50,7 +50,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf autoconf-archive automake libtool pkg-config
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libtool-bin pkg-config
         shell: bash
 
       - name: Configure (Windows)

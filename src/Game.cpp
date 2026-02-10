@@ -55,6 +55,8 @@ Game::Game():
     game_over_font_ptr{nullptr, TTF_CloseFont},
     scoreSurface{nullptr, SDL_FreeSurface},
     scoreTexture{nullptr, SDL_DestroyTexture},
+    startSurface{nullptr, SDL_FreeSurface},
+    startTexture{nullptr, SDL_DestroyTexture},
     gameOverSurface{nullptr, SDL_FreeSurface},
     gameOverTexture{nullptr, SDL_DestroyTexture},
     gameOverSubTextSurface{nullptr, SDL_FreeSurface},
@@ -157,6 +159,21 @@ void Game::loading_media(){
     this->gameOverSubTextDestRect = {Width / 3 + 40, Height / 3 + 70, gameOverSubTextSurface->w, gameOverSubTextSurface->h};
     this->gameOverSubTextTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->gameOverSubTextSurface.get()));
     if(this->gameOverSubTextTexture == nullptr){
+        throw std::runtime_error(SDL_GetError());
+    }
+
+    this->startSurface.reset(TTF_RenderText_Blended(this->game_over_font_ptr.get(), this->START_TEXT.c_str(), textColor));
+    if(this->startSurface == nullptr){
+        throw std::runtime_error(TTF_GetError());
+    }
+    this->startDestRect = {
+        (Width - startSurface->w) / 2,
+        (Height - startSurface->h) / 2,
+        startSurface->w,
+        startSurface->h
+    };
+    this->startTexture.reset(SDL_CreateTextureFromSurface(this->renderer.get(), this->startSurface.get()));
+    if(this->startTexture == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
 }
@@ -265,6 +282,10 @@ void Game::run(){
                 break;
             // Handle keyboard input
             case SDL_KEYDOWN:
+                if(!gameStarted){
+                    gameStarted = true;
+                    break;
+                }
                 switch (event.key.keysym.sym)
                 {
                 case SDLK_SPACE:
@@ -297,17 +318,12 @@ void Game::run(){
         SDL_RenderClear(this->renderer.get());
 
         // --- Game Logic Update ---
-        if(!gameOver){
+        if(gameStarted && !gameOver){
             // Update all game elements if the game is active.
             this->trackUpdate();
             this->updateDinoAnimation();
             this->updateCactus();
             this->updateScore();
-        }
-        else{
-            // If the game is over, display the "Game Over" text.
-            SDL_RenderCopy(this->renderer.get(), this->gameOverTexture.get(), nullptr, &this->gameOverDestRect);
-            SDL_RenderCopy(this->renderer.get(), this->gameOverSubTextTexture.get(), nullptr, &this->gameOverSubTextDestRect);
         }
 
         // --- Rendering ---
@@ -320,14 +336,24 @@ void Game::run(){
         SDL_RenderCopy(this->renderer.get(), this->largeCactus1_ptr.get(), nullptr, &this->largeCactus1DestRect);
         SDL_RenderCopy(this->renderer.get(), this->largeCactus2_ptr.get(), nullptr, &this->largeCactus2DestRect);
         SDL_RenderCopy(this->renderer.get(), this->largeCactus3_ptr.get(), nullptr, &this->largeCactus3DestRect);
-        // Render the score.
-        this->renderScore(this->renderer.get());
+        if(gameStarted){
+            // Render the score.
+            this->renderScore(this->renderer.get());
+        }
+        if(!gameStarted){
+            SDL_RenderCopy(this->renderer.get(), this->startTexture.get(), nullptr, &this->startDestRect);
+        }
+        else if(gameOver){
+            // If the game is over, display the "Game Over" text.
+            SDL_RenderCopy(this->renderer.get(), this->gameOverTexture.get(), nullptr, &this->gameOverDestRect);
+            SDL_RenderCopy(this->renderer.get(), this->gameOverSubTextTexture.get(), nullptr, &this->gameOverSubTextDestRect);
+        }
         // Present the back buffer to the screen to show the rendered frame.
         SDL_RenderPresent(this->renderer.get());
         // the delay create some what 60fps feeling
         SDL_Delay(16);
         // Check for collisions to trigger the game over state.
-        if(!gameOver && (SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus1DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus2DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus3DestRect))){
+        if(gameStarted && !gameOver && (SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus1DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus2DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus3DestRect))){
             gameOver = true;
         }
     }

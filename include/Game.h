@@ -26,6 +26,7 @@ private:
     static constexpr int SCORE_FONT_SIZE = 30; // Font size for the score display
     static constexpr int GAME_OVER_FONT_SIZE = 80; // Font size for the "Game Over" text
     const std::string title = "Dino Game"; // Window title
+    const std::string START_TEXT = "Press  Any  Key"; // Start screen message
     const std::string GAME_OVER_TEXT = "Game Over!"; // Game over message
     const std::string GAME_OVER_SUB_TEXT = "Press  Space  to  Restart"; // Restart instruction
 
@@ -56,6 +57,8 @@ private:
     std::unique_ptr<TTF_Font, decltype(&TTF_CloseFont)> game_over_font_ptr;
     std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> scoreSurface;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> scoreTexture;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> startSurface;
+    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> startTexture;
     std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> gameOverSurface;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> gameOverTexture;
     std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> gameOverSubTextSurface;
@@ -76,6 +79,7 @@ private:
     SDL_Rect largeCactus2DestRect;
     SDL_Rect largeCactus3DestRect;
     SDL_Rect scoreDestRect;
+    SDL_Rect startDestRect;
     SDL_Rect gameOverDestRect;
     SDL_Rect gameOverSubTextDestRect;
 
@@ -99,6 +103,7 @@ private:
     Uint32 lastScoreUpdate = 0; // Time of the last score increment
 
     // Game state
+    bool gameStarted = false; // Flag to indicate if the initial start key was pressed
     bool gameOver = false; // Flag to indicate if the game is over
 
 public:

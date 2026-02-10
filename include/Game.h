@@ -22,9 +22,13 @@ private:
     // --- Game Constants ---
     static constexpr int Height = 720; // Window height
     static constexpr int Width = 1280; // Window width
-    static constexpr int TRACK_SPEED = 8; // Horizontal speed of the game world
+    static constexpr int BASE_TRACK_SPEED = 8; // Starting horizontal speed of the game world
+    static constexpr int MAX_TRACK_SPEED = 20; // Max horizontal speed cap for later-game difficulty
+    static constexpr int SCORE_PER_SPEED_STEP = 100; // Score needed for each speed increase
     static constexpr int SCORE_FONT_SIZE = 30; // Font size for the score display
     static constexpr int GAME_OVER_FONT_SIZE = 80; // Font size for the "Game Over" text
+    static constexpr Uint32 BASE_FRAME_INTERVAL = 150; // Starting dino run animation interval (ms)
+    static constexpr Uint32 MIN_FRAME_INTERVAL = 80; // Minimum dino run animation interval (ms)
     const std::string title = "Dino Game"; // Window title
     const std::string START_TEXT = "Press  Any  Key"; // Start screen message
     const std::string GAME_OVER_TEXT = "Game Over!"; // Game over message
@@ -95,7 +99,6 @@ private:
     // Dino animation
     bool useLeftFrame = true; // Toggles between dino's run animation frames
     Uint32 lastFrameTime = 0; // Time of the last animation frame switch
-    Uint32 frameInterval = 150; // How often to switch animation frames (ms)
 
     // Dino jumping physics
     float velocityY = 0.0f; // Current vertical velocity of the dino
@@ -126,6 +129,12 @@ public:
 
     // Updates the position of the track to create a scrolling effect
     void trackUpdate();
+
+    // Returns the current movement speed based on score progression
+    int getCurrentTrackSpeed() const;
+
+    // Returns the dino run frame interval so animation speeds up with score
+    Uint32 getCurrentFrameInterval() const;
 
     // Renders the dinosaur to the screen
     void renderDino(SDL_Renderer* renderer);

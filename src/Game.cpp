@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <algorithm>
 #include <filesystem>
 #include <vector>
 
@@ -291,7 +292,7 @@ void Game::loading_media(){
 
 // Updates the track's position to create an infinite scrolling effect.
 void Game::trackUpdate(){
-    floorOffsetX += TRACK_SPEED;
+    floorOffsetX += getCurrentTrackSpeed();
     if (floorOffsetX >= track.get_width()) {
         floorOffsetX = track.get_default_x();
     }
@@ -299,10 +300,22 @@ void Game::trackUpdate(){
     this->trackDestRect2.x = -floorOffsetX + track.get_width();
 }
 
+int Game::getCurrentTrackSpeed() const {
+    const int speedIncrease = score / SCORE_PER_SPEED_STEP;
+    return std::min(BASE_TRACK_SPEED + speedIncrease, MAX_TRACK_SPEED);
+}
+
+Uint32 Game::getCurrentFrameInterval() const {
+    const int speedDelta = getCurrentTrackSpeed() - BASE_TRACK_SPEED;
+    const int frameDecrease = speedDelta * 8;
+    const int interval = static_cast<int>(BASE_FRAME_INTERVAL) - frameDecrease;
+    return static_cast<Uint32>(std::max(static_cast<int>(MIN_FRAME_INTERVAL), interval));
+}
+
 // Toggles between the two running animation frames for the dinosaur.
 void Game::updateDinoRunAnimation(){
     Uint32 now = SDL_GetTicks();
-    if (now - lastFrameTime > frameInterval) {
+    if (now - lastFrameTime > getCurrentFrameInterval()) {
         useLeftFrame = !useLeftFrame;   // toggle frame
         lastFrameTime = now;
     }
@@ -334,18 +347,19 @@ void Game::renderDino(SDL_Renderer* renderer){
 
 // Updates the position of the cacti, moving them from right to left.
 void Game::updateCactus(){
+    const int speed = getCurrentTrackSpeed();
     if(largeCactus1DestRect.x > -largeCactus1.get_width())
-        largeCactus1DestRect.x -= TRACK_SPEED;
+        largeCactus1DestRect.x -= speed;
     else
         largeCactus1DestRect.x = largeCactus1_spawn_point;
     
     if(largeCactus2DestRect.x > -largeCactus2.get_width())
-        largeCactus2DestRect.x -= TRACK_SPEED;
+        largeCactus2DestRect.x -= speed;
     else
         largeCactus2DestRect.x = largeCactus1DestRect.x + dist(gen);
 
     if(largeCactus3DestRect.x > -largeCactus3.get_width())
-        largeCactus3DestRect.x -= TRACK_SPEED;
+        largeCactus3DestRect.x -= speed;
     else
         largeCactus3DestRect.x = largeCactus2DestRect.x  + dist(gen);
 }

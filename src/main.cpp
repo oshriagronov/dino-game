@@ -1,11 +1,14 @@
 // g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf
+// g++ -std=c++17 src/*.cpp -Iinclude $(pkg-config --cflags sdl2 SDL2_image SDL2_ttf) -o demo $(pkg-config --libs sdl2 SDL2_image SDL2_ttf)
 #include "Game.h"
 // Function prototypes for SDL initialization and cleanup
 void initialize_sdl();
 void close_sdl();
 
 // Main entry point of the application
-int main(){
+int main(int argc, char* argv[]){
+    (void)argc;
+    (void)argv;
     try
     {
         // Initialize all SDL subsystems

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dino Game
+Comment=Chrome Dino clone built with SDL2
+Exec=dino-game
+Icon=dino-game
+Categories=Game;
+Terminal=false

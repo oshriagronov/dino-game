@@ -18,42 +18,104 @@ This project is a C++ recreation of Chrome's classic offline Dinosaur game, deve
 
 - C++
 - SDL2
-- memory
-- random
+- CMake
+- vcpkg
 
-## Getting Started
+## Download and Play
 
-To get a local copy up and running follow these simple steps.
+From GitHub Releases, download the package for your platform:
+
+- **Windows portable:** `dino-game-windows-portable.zip` (extract and double-click `dino-game.exe`)
+- **macOS portable:** `dino-game-macos-portable.zip` (unzip and open `dino-game.app`)
+- **Linux AppImage:** `dino-game-linux-x86_64.AppImage` (single file, no install; if needed run `chmod +x dino-game-linux-x86_64.AppImage` once)
+
+If macOS says the app is damaged or blocked, run once:
+
+```bash
+xattr -dr com.apple.quarantine dino-game.app
+```
+
+## Manual Build and Test (Local)
 
 ### Prerequisites
 
-- Linux, MacOS or Windows
+- Linux, macOS, or Windows
 - C++ compiler
-- SDL2 library - SDL2, SDL_image, SDL2_ttf
+- CMake 3.21+
+- vcpkg
 
-> SDL2 installation guide can be found [here](https://wiki.libsdl.org/SDL2/Installation)
+### 1. Clone
 
-### Installation
+```bash
+git clone https://github.com/oshriagronov/dino-game && cd dino-game
+```
 
----
+### 2. Configure
 
-1. **Clone and enter the dino-game repository:**
+Use the vcpkg toolchain and a platform triplet:
 
-   ```bash
-   git clone https://github.com/oshriagronov/dino-game && cd dino-game
-   ```
+- Linux: `x64-linux`
+- macOS Apple Silicon: `arm64-osx`
+- macOS Intel: `x64-osx`
+- Windows: `x64-windows`
 
-2. **Compile:**
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=your-triplet
+```
 
-   ```bash
-   g++ src/*.cpp -I include -o demo -lSDL2 -lSDL2main -lSDL2_image -lSDL2_ttf
-   ```
+### 3. Build
 
-3. **Run:**
+```bash
+cmake --build build --config Release
+```
 
-   ```bash
-   ./demo
-   ```
+### 4. Install to a runnable folder
+
+```bash
+cmake --install build --config Release --prefix dist
+```
+
+### 5. Run
+
+- Windows: `dist\dino-game.exe`
+- macOS: `open dist/dino-game.app`
+- Linux: `./dist/dino-game`
+
+## Local Packaging
+
+### Linux AppImage
+
+From the project root:
+
+```bash
+mkdir -p AppDir/usr/bin
+cp -a dist/. AppDir/usr/bin/
+cp packaging/linux/AppRun AppDir/AppRun
+cp packaging/linux/dino-game.desktop AppDir/dino-game.desktop
+cp assets/logo.png AppDir/dino-game.png
+mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+cp assets/logo.png AppDir/usr/share/icons/hicolor/256x256/apps/dino-game.png
+wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+chmod +x appimagetool
+ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool AppDir dino-game-linux-x86_64.AppImage
+```
+
+Run it:
+
+```bash
+chmod +x dino-game-linux-x86_64.AppImage
+./dino-game-linux-x86_64.AppImage
+```
+
+### Windows Portable Zip
+
+Build and install to `dist`, then zip that folder:
+
+```powershell
+cmake -E tar cfv dino-game-windows-portable.zip --format=zip dist
+```
+
+Users only need to extract and run `dino-game.exe`.
 
 ## Acknowledgements
 

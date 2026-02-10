@@ -50,9 +50,14 @@ private:
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> track_ptr;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> dino_ptr_run1;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> dino_ptr_run2;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> dino_run1_surface;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> dino_run2_surface;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> largeCactus1_ptr;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> largeCactus2_ptr;
     std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> largeCactus3_ptr;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> largeCactus1_surface;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> largeCactus2_surface;
+    std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> largeCactus3_surface;
     std::unique_ptr<TTF_Font, decltype(&TTF_CloseFont)> score_font_ptr;
     std::unique_ptr<TTF_Font, decltype(&TTF_CloseFont)> game_over_font_ptr;
     std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)> scoreSurface;

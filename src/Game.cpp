@@ -39,6 +39,84 @@ std::string resolve_asset_path(const std::string& relative, const std::vector<st
     }
     return (base_dirs.front() / relative).string();
 }
+
+SDL_Surface* load_surface_rgba32(const std::string& path) {
+    SDL_Surface* loaded = IMG_Load(path.c_str());
+    if (loaded == nullptr) {
+        return nullptr;
+    }
+
+    SDL_Surface* converted = SDL_ConvertSurfaceFormat(loaded, SDL_PIXELFORMAT_RGBA32, 0);
+    SDL_FreeSurface(loaded);
+    return converted;
+}
+
+bool is_solid_pixel(const SDL_Surface* surface, int x, int y) {
+    const Uint8* row = static_cast<const Uint8*>(surface->pixels) + y * surface->pitch;
+    const Uint32 pixel = *(reinterpret_cast<const Uint32*>(row) + x);
+    Uint8 r = 0;
+    Uint8 g = 0;
+    Uint8 b = 0;
+    Uint8 a = 0;
+    SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
+
+    // Ignore transparent pixels and very light anti-aliased border pixels.
+    if (a < 200) {
+        return false;
+    }
+    const int luminance = (299 * static_cast<int>(r) + 587 * static_cast<int>(g) + 114 * static_cast<int>(b)) / 1000;
+    return luminance < 205;
+}
+
+bool has_precise_collision(const SDL_Surface* dinoSurface, const SDL_Rect& dinoRect, const SDL_Surface* cactusSurface, const SDL_Rect& cactusRect) {
+    if (dinoSurface == nullptr || cactusSurface == nullptr) {
+        return false;
+    }
+
+    SDL_Rect overlap;
+    if (!SDL_IntersectRect(&dinoRect, &cactusRect, &overlap)) {
+        return false;
+    }
+
+    const bool needsLockDino = SDL_MUSTLOCK(dinoSurface) != 0;
+    const bool needsLockCactus = SDL_MUSTLOCK(cactusSurface) != 0;
+    SDL_Surface* mutableDinoSurface = const_cast<SDL_Surface*>(dinoSurface);
+    SDL_Surface* mutableCactusSurface = const_cast<SDL_Surface*>(cactusSurface);
+
+    if (needsLockDino && SDL_LockSurface(mutableDinoSurface) != 0) {
+        return false;
+    }
+    if (needsLockCactus && SDL_LockSurface(mutableCactusSurface) != 0) {
+        if (needsLockDino) {
+            SDL_UnlockSurface(mutableDinoSurface);
+        }
+        return false;
+    }
+
+    bool collided = false;
+    for (int y = 0; y < overlap.h && !collided; ++y) {
+        const int dinoY = overlap.y - dinoRect.y + y;
+        const int cactusY = overlap.y - cactusRect.y + y;
+
+        for (int x = 0; x < overlap.w; ++x) {
+            const int dinoX = overlap.x - dinoRect.x + x;
+            const int cactusX = overlap.x - cactusRect.x + x;
+            if (is_solid_pixel(dinoSurface, dinoX, dinoY) && is_solid_pixel(cactusSurface, cactusX, cactusY)) {
+                collided = true;
+                break;
+            }
+        }
+    }
+
+    if (needsLockCactus) {
+        SDL_UnlockSurface(mutableCactusSurface);
+    }
+    if (needsLockDino) {
+        SDL_UnlockSurface(mutableDinoSurface);
+    }
+
+    return collided;
+}
 } // namespace
 
 // Constructor: Initializes all member variables, especially the smart pointers and SDL_Rects.
@@ -48,9 +126,14 @@ Game::Game():
     track_ptr{nullptr, SDL_DestroyTexture},
     dino_ptr_run1{nullptr, SDL_DestroyTexture},
     dino_ptr_run2{nullptr, SDL_DestroyTexture},
+    dino_run1_surface{nullptr, SDL_FreeSurface},
+    dino_run2_surface{nullptr, SDL_FreeSurface},
     largeCactus1_ptr{nullptr, SDL_DestroyTexture},
     largeCactus2_ptr{nullptr, SDL_DestroyTexture},
     largeCactus3_ptr{nullptr, SDL_DestroyTexture},
+    largeCactus1_surface{nullptr, SDL_FreeSurface},
+    largeCactus2_surface{nullptr, SDL_FreeSurface},
+    largeCactus3_surface{nullptr, SDL_FreeSurface},
     score_font_ptr{nullptr, TTF_CloseFont},
     game_over_font_ptr{nullptr, TTF_CloseFont},
     scoreSurface{nullptr, SDL_FreeSurface},
@@ -98,42 +181,70 @@ void Game::init()
 // Loads all necessary media files (textures and fonts) into memory.
 void Game::loading_media(){
     const auto asset_dirs = get_asset_base_dirs();
+    const std::string trackPath = resolve_asset_path(track.get_path(), asset_dirs);
+    const std::string dinoRun1Path = resolve_asset_path(dino.get_path_run1(), asset_dirs);
+    const std::string dinoRun2Path = resolve_asset_path(dino.get_path_run2(), asset_dirs);
+    const std::string largeCactus1Path = resolve_asset_path(largeCactus1.get_path(), asset_dirs);
+    const std::string largeCactus2Path = resolve_asset_path(largeCactus2.get_path(), asset_dirs);
+    const std::string largeCactus3Path = resolve_asset_path(largeCactus3.get_path(), asset_dirs);
     this->track_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        resolve_asset_path(track.get_path(), asset_dirs).c_str()));
+        trackPath.c_str()));
     if(this->track_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->dino_ptr_run1.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        resolve_asset_path(dino.get_path_run1(), asset_dirs).c_str()));
+        dinoRun1Path.c_str()));
     if(this->dino_ptr_run1 == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->dino_ptr_run2.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        resolve_asset_path(dino.get_path_run2(), asset_dirs).c_str()));
+        dinoRun2Path.c_str()));
     if(this->dino_ptr_run2 == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->largeCactus1_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        resolve_asset_path(largeCactus1.get_path(), asset_dirs).c_str()));
+        largeCactus1Path.c_str()));
     if(this->largeCactus1_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->largeCactus2_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        resolve_asset_path(largeCactus2.get_path(), asset_dirs).c_str()));
+        largeCactus2Path.c_str()));
     if(this->largeCactus2_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
     this->largeCactus3_ptr.reset(IMG_LoadTexture(
         this->renderer.get(), 
-        resolve_asset_path(largeCactus3.get_path(), asset_dirs).c_str()));
+        largeCactus3Path.c_str()));
     if(this->largeCactus3_ptr == nullptr){
         throw std::runtime_error(SDL_GetError());
     }
+
+    this->dino_run1_surface.reset(load_surface_rgba32(dinoRun1Path));
+    if(this->dino_run1_surface == nullptr){
+        throw std::runtime_error(IMG_GetError());
+    }
+    this->dino_run2_surface.reset(load_surface_rgba32(dinoRun2Path));
+    if(this->dino_run2_surface == nullptr){
+        throw std::runtime_error(IMG_GetError());
+    }
+    this->largeCactus1_surface.reset(load_surface_rgba32(largeCactus1Path));
+    if(this->largeCactus1_surface == nullptr){
+        throw std::runtime_error(IMG_GetError());
+    }
+    this->largeCactus2_surface.reset(load_surface_rgba32(largeCactus2Path));
+    if(this->largeCactus2_surface == nullptr){
+        throw std::runtime_error(IMG_GetError());
+    }
+    this->largeCactus3_surface.reset(load_surface_rgba32(largeCactus3Path));
+    if(this->largeCactus3_surface == nullptr){
+        throw std::runtime_error(IMG_GetError());
+    }
+
     this->score_font_ptr.reset(TTF_OpenFont(resolve_asset_path("assets/ArcadeClassic.ttf", asset_dirs).c_str(), SCORE_FONT_SIZE));
     if(this->score_font_ptr == nullptr){
         throw std::runtime_error(TTF_GetError());
@@ -353,7 +464,11 @@ void Game::run(){
         // the delay create some what 60fps feeling
         SDL_Delay(16);
         // Check for collisions to trigger the game over state.
-        if(gameStarted && !gameOver && (SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus1DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus2DestRect) || SDL_HasIntersection(&this->dinoDestRect, &this->largeCactus3DestRect))){
+        const SDL_Surface* activeDinoSurface = useLeftFrame ? this->dino_run1_surface.get() : this->dino_run2_surface.get();
+        if(gameStarted && !gameOver &&
+            (has_precise_collision(activeDinoSurface, this->dinoDestRect, this->largeCactus1_surface.get(), this->largeCactus1DestRect) ||
+             has_precise_collision(activeDinoSurface, this->dinoDestRect, this->largeCactus2_surface.get(), this->largeCactus2DestRect) ||
+             has_precise_collision(activeDinoSurface, this->dinoDestRect, this->largeCactus3_surface.get(), this->largeCactus3DestRect))){
             gameOver = true;
         }
     }

@@ -154,7 +154,9 @@ Game::Game():
     largeCactus2DestRect{largeCactus2_spawn_point, largeCactus2.get_y(), largeCactus2.get_width(), largeCactus2.get_height()},
     largeCactus3DestRect{largeCactus3_spawn_point, largeCactus3.get_y(), largeCactus3.get_width(), largeCactus3.get_height()},
     trackDestRect2{track.get_default_x() + track.get_width(), track.get_default_y(), track.get_width(), track.get_height()}
-{}
+{
+    resetCactusPositions();
+}
 
 // Initializes the SDL window and renderer.
 void Game::init()
@@ -300,6 +302,32 @@ void Game::trackUpdate(){
     this->trackDestRect2.x = -floorOffsetX + track.get_width();
 }
 
+int Game::getMinimumCactusGap() const {
+    const int speedDelta = getCurrentTrackSpeed() - BASE_TRACK_SPEED;
+    return MIN_CACTUS_GAP + speedDelta * GAP_GROWTH_PER_SPEED;
+}
+
+int Game::getRandomCactusGap() {
+    const int minGap = getMinimumCactusGap();
+    const int maxGap = minGap + MAX_CACTUS_GAP_RANDOM_EXTRA;
+    return dist(gen, std::uniform_int_distribution<int>::param_type(minGap, maxGap));
+}
+
+int Game::getFarthestCactusX() const {
+    return std::max(largeCactus1DestRect.x, std::max(largeCactus2DestRect.x, largeCactus3DestRect.x));
+}
+
+void Game::respawnCactus(SDL_Rect& cactusRect) {
+    const int spawnAfter = std::max(Width, getFarthestCactusX());
+    cactusRect.x = spawnAfter + getRandomCactusGap();
+}
+
+void Game::resetCactusPositions() {
+    largeCactus1DestRect.x = largeCactus1_spawn_point + getRandomCactusGap() / 2;
+    largeCactus2DestRect.x = largeCactus1DestRect.x + getRandomCactusGap();
+    largeCactus3DestRect.x = largeCactus2DestRect.x + getRandomCactusGap();
+}
+
 int Game::getCurrentTrackSpeed() const {
     const int speedIncrease = score / SCORE_PER_SPEED_STEP;
     return std::min(BASE_TRACK_SPEED + speedIncrease, MAX_TRACK_SPEED);
@@ -351,17 +379,17 @@ void Game::updateCactus(){
     if(largeCactus1DestRect.x > -largeCactus1.get_width())
         largeCactus1DestRect.x -= speed;
     else
-        largeCactus1DestRect.x = largeCactus1_spawn_point;
+        respawnCactus(largeCactus1DestRect);
     
     if(largeCactus2DestRect.x > -largeCactus2.get_width())
         largeCactus2DestRect.x -= speed;
     else
-        largeCactus2DestRect.x = largeCactus1DestRect.x + dist(gen);
+        respawnCactus(largeCactus2DestRect);
 
     if(largeCactus3DestRect.x > -largeCactus3.get_width())
         largeCactus3DestRect.x -= speed;
     else
-        largeCactus3DestRect.x = largeCactus2DestRect.x  + dist(gen);
+        respawnCactus(largeCactus3DestRect);
 }
 
 void Game::updateScore(){
@@ -418,9 +446,7 @@ void Game::run(){
                         // Reset game state when the game is over and space is pressed.
                         gameOver = false;
                         score = 0;
-                        largeCactus1DestRect.x = largeCactus1_spawn_point;
-                        largeCactus2DestRect.x = largeCactus2_spawn_point;
-                        largeCactus3DestRect.x = largeCactus3_spawn_point;
+                        resetCactusPositions();
                         isJumping = false;
                         dinoDestRect.y = dino.get_y();
                         velocityY = 0.0f;

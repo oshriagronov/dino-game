@@ -25,6 +25,9 @@ private:
     static constexpr int BASE_TRACK_SPEED = 8; // Starting horizontal speed of the game world
     static constexpr int MAX_TRACK_SPEED = 20; // Max horizontal speed cap for later-game difficulty
     static constexpr int SCORE_PER_SPEED_STEP = 100; // Score needed for each speed increase
+    static constexpr int MIN_CACTUS_GAP = 260; // Minimum playable gap between consecutive cacti
+    static constexpr int GAP_GROWTH_PER_SPEED = 18; // Keep patterns fair as speed increases
+    static constexpr int MAX_CACTUS_GAP_RANDOM_EXTRA = 320; // Extra random gap range on top of minimum
     static constexpr int SCORE_FONT_SIZE = 30; // Font size for the score display
     static constexpr int GAME_OVER_FONT_SIZE = 80; // Font size for the "Game Over" text
     static constexpr Uint32 BASE_FRAME_INTERVAL = 150; // Starting dino run animation interval (ms)
@@ -129,6 +132,21 @@ public:
 
     // Updates the position of the track to create a scrolling effect
     void trackUpdate();
+
+    // Returns a minimum safe cactus gap for the current speed
+    int getMinimumCactusGap() const;
+
+    // Returns a randomized cactus gap with a guaranteed minimum safe spacing
+    int getRandomCactusGap();
+
+    // Returns the right-most cactus position currently active
+    int getFarthestCactusX() const;
+
+    // Respawns one cactus after the farthest active cactus with a safe random gap
+    void respawnCactus(SDL_Rect& cactusRect);
+
+    // Resets all cactus positions with randomized but playable spacing
+    void resetCactusPositions();
 
     // Returns the current movement speed based on score progression
     int getCurrentTrackSpeed() const;
